@@ -54,6 +54,10 @@ LOCAL_C_INCLUDES :=                                                 \
 
 LOCAL_MODULE:= libmediaplayerservice
 
+ifeq ($(TARGET_BOARD_PLATFORM),msm7x27a)
+    LOCAL_CFLAGS += -DUSE_SUBMIT_ONE_INPUT_BUFFER
+endif
+
 include $(BUILD_SHARED_LIBRARY)
 
 include $(call all-makefiles-under,$(LOCAL_PATH))
