@@ -35,6 +35,19 @@ LOCAL_SHARED_LIBRARIES := \
 LOCAL_C_INCLUDES += \
 	system/media/camera/include \
 
+ifeq ($(BOARD_CAMERA_HAVE_ISO),true)
+	LOCAL_CFLAGS += -DHAVE_ISO
+endif
+
+ifeq ($(BOARD_USES_QCOM_HARDWARE),true)
+	LOCAL_CFLAGS += -DQCOM_HARDWARE
+endif
+ifeq ($(BOARD_USES_QCOM_LEGACY_CAM_PARAMS),true)
+	LOCAL_CFLAGS += -DQCOM_LEGACY_CAM_PARAMS
+endif
+
 LOCAL_MODULE:= libcamera_client
+
+LOCAL_CFLAGS += -fno-strict-aliasing
 
 include $(BUILD_SHARED_LIBRARY)

@@ -46,6 +46,15 @@ LOCAL_SHARED_LIBRARIES := \
     libdl \
     libpowermanager
 
+# SRS Processing
+ifeq ($(strip $(BOARD_USES_SRS_TRUEMEDIA)),true)
+LOCAL_SHARED_LIBRARIES += libsrsprocessing
+LOCAL_CFLAGS += -DSRS_PROCESSING -fon-strict-aliasing
+LOCAL_C_INCLUDES += $(TARGET_OUT_HEADERS)/mm-audio/audio-effects
+endif
+# SRS Processing
+
+
 LOCAL_STATIC_LIBRARIES := \
     libscheduling_policy \
     libcpustats \
@@ -55,16 +64,16 @@ LOCAL_MODULE:= libaudioflinger
 
 LOCAL_SRC_FILES += FastMixer.cpp FastMixerState.cpp AudioWatchdog.cpp
 
-LOCAL_CFLAGS += -DSTATE_QUEUE_INSTANTIATIONS='"StateQueueInstantiations.cpp"'
+LOCAL_CFLAGS += -DSTATE_QUEUE_INSTANTIATIONS='"StateQueueInstantiations.cpp"' -fno-strict-aliasing
 
 # Define ANDROID_SMP appropriately. Used to get inline tracing fast-path.
 ifeq ($(TARGET_CPU_SMP),true)
-    LOCAL_CFLAGS += -DANDROID_SMP=1
+    LOCAL_CFLAGS += -DANDROID_SMP=1 -fno-strict-aliasing
 else
-    LOCAL_CFLAGS += -DANDROID_SMP=0
+    LOCAL_CFLAGS += -DANDROID_SMP=0 -fno-strict-aliasing
 endif
 
-LOCAL_CFLAGS += -fvisibility=hidden
+LOCAL_CFLAGS += -fvisibility=hidden -fno-strict-aliasing
 
 include $(BUILD_SHARED_LIBRARY)
 
@@ -74,9 +83,9 @@ include $(BUILD_SHARED_LIBRARY)
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES:=               \
-	test-resample.cpp 			\
+        test-resample.cpp                         \
     AudioResampler.cpp.arm      \
-	AudioResamplerCubic.cpp.arm \
+        AudioResamplerCubic.cpp.arm \
     AudioResamplerSinc.cpp.arm
 
 LOCAL_SHARED_LIBRARIES := \
