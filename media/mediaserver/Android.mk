@@ -10,10 +10,6 @@ endif
 
 include $(CLEAR_VARS)
 
-ifeq ($(QCOM_LISTEN_FEATURE),true)
-  LOCAL_CFLAGS += -DQCOM_LISTEN_FEATURE_ENABLE -fno-strict-aliasing
-endif
-
 LOCAL_SRC_FILES:= \
 	main_mediaserver.cpp 
 

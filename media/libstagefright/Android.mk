@@ -64,47 +64,7 @@ LOCAL_C_INCLUDES:= \
         $(TOP)/frameworks/native/include/media/openmax \
         $(TOP)/external/flac/include \
         $(TOP)/external/tremolo \
-        $(TOP)/external/openssl/include \
         $(TOP)/external/openssl/include
-
-ifneq ($(TI_CUSTOM_DOMX_PATH),)
-LOCAL_C_INCLUDES += $(TI_CUSTOM_DOMX_PATH)/omx_core/inc
-LOCAL_CPPFLAGS += -DUSE_TI_CUSTOM_DOMX
-else
-LOCAL_C_INCLUDES += $(TOP)/frameworks/native/include/media/openmax
-endif
-
-ifeq ($(BOARD_USES_STE_FMRADIO),true)
-LOCAL_SRC_FILES += \
-        FMRadioSource.cpp                 \
-        PCMExtractor.cpp
-endif
-
-ifeq ($(TARGET_QCOM_AUDIO_VARIANT),caf)
-    ifeq ($(BOARD_USES_ALSA_AUDIO),true)
-        LOCAL_SRC_FILES += LPAPlayerALSA.cpp
-        ifeq ($(call is-chipset-in-board-platform,msm8960),true)
-            LOCAL_SRC_FILES += TunnelPlayer.cpp
-            LOCAL_CFLAGS += -DUSE_TUNNEL_MODE -fno-strict-aliasing
-            LOCAL_CFLAGS += -DTUNNEL_MODE_SUPPORTS_AMRWB
-        endif
-        ifeq ($(NO_TUNNEL_MODE_FOR_MULTICHANNEL),true)
-            LOCAL_CFLAGS += -DNO_TUNNEL_MODE_FOR_MULTICHANNEL -fno-strict-aliasing
-        endif
-    else
-        LOCAL_SRC_FILES += LPAPlayer.cpp
-        LOCAL_CFLAGS += -DLEGACY_LPA -fno-strict-aliasing
-    endif
-    LOCAL_CFLAGS += -DQCOM_ENHANCED_AUDIO -fno-strict-aliasing
-endif
-
-ifeq ($(TARGET_QCOM_MEDIA_VARIANT),caf)
-LOCAL_C_INCLUDES += \
-        $(TOP)/hardware/qcom/media-caf/mm-core/inc
-else
-LOCAL_C_INCLUDES += \
-        $(TOP)/hardware/qcom/media/mm-core/inc
-endif
 
 LOCAL_SHARED_LIBRARIES := \
         libbinder \
@@ -156,36 +116,9 @@ LOCAL_SHARED_LIBRARIES += \
 
 LOCAL_CFLAGS += -Wno-multichar -fno-strict-aliasing
 
-ifeq ($(BOARD_USE_SAMSUNG_COLORFORMAT), true)
-LOCAL_CFLAGS += -DUSE_SAMSUNG_COLORFORMAT -fno-strict-aliasing
-
-# Include native color format header path
-LOCAL_C_INCLUDES += \
-	$(TOP)/hardware/samsung/exynos4/hal/include \
-	$(TOP)/hardware/samsung/exynos4/include
-
-endif
-
-ifeq ($(BOARD_USE_TI_DUCATI_H264_PROFILE), true)
-LOCAL_CFLAGS += -DUSE_TI_DUCATI_H264_PROFILE -fno-strict-aliasing
-endif
-
 LOCAL_MODULE:= libstagefright
 
 LOCAL_MODULE_TAGS := optional
-
-ifeq ($(TARGET_ENABLE_QC_AV_ENHANCEMENTS),true)
-    LOCAL_CFLAGS += -DENABLE_QC_AV_ENHANCEMENTS -fno-strict-aliasing
-    LOCAL_SRC_FILES  += ExtendedWriter.cpp
-    LOCAL_SRC_FILES  += QCMediaDefs.cpp
-    ifeq ($(TARGET_QCOM_MEDIA_VARIANT),caf)
-        LOCAL_C_INCLUDES += \
-            $(TOP)/hardware/qcom/media-caf/mm-core/inc
-    else
-        LOCAL_C_INCLUDES += \
-            $(TOP)/hardware/qcom/media/mm-core/inc
-    endif
-endif #TARGET_ENABLE_QC_AV_ENHANCEMENTS
 
 include $(BUILD_SHARED_LIBRARY)
 
