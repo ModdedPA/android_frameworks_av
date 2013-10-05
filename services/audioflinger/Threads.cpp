@@ -1989,7 +1989,13 @@ bool AudioFlinger::PlaybackThread::threadLoop()
         // only process effects if we're going to write
         if (sleepTime == 0) {
             for (size_t i = 0; i < effectChains.size(); i ++) {
-                effectChains[i]->process_l();
+#ifdef QCOM_HARDWARE
+                if (effectChains[i] != mAudioFlinger->mLPAEffectChain) {
+#endif
+                    effectChains[i]->process_l();
+#ifdef QCOM_HARDWARE
+                }
+#endif
             }
         }
 
@@ -4327,9 +4333,9 @@ void AudioFlinger::RecordThread::audioConfigChanged_l(int event, int param) {
 
 void AudioFlinger::RecordThread::readInputParameters()
 {
-    delete mRsmpInBuffer;
+    delete[] mRsmpInBuffer;
     // mRsmpInBuffer is always assigned a new[] below
-    delete mRsmpOutBuffer;
+    delete[] mRsmpOutBuffer;
     mRsmpOutBuffer = NULL;
     delete mResampler;
     mResampler = NULL;

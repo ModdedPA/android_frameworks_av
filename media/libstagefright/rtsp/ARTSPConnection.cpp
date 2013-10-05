@@ -483,7 +483,6 @@ void ARTSPConnection::onReceiveResponse() {
     FD_SET(mSocket, &rs);
 
     int res = select(mSocket + 1, &rs, NULL, NULL, &tv);
-    CHECK_GE(res, 0);
 
     if (res == 1) {
         MakeSocketBlocking(mSocket, true);
@@ -564,6 +563,9 @@ bool ARTSPConnection::receiveLine(AString *line) {
 
         if (sawCR && c == '\n') {
             line->erase(line->size() - 1, 1);
+            return true;
+        } else if (c == '\n') {
+            // some reponse line ended with '\n', instead of '\r\n'.
             return true;
         }
 

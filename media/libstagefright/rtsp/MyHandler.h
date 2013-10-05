@@ -127,7 +127,8 @@ struct MyHandler : public AHandler {
           mKeepAliveTimeoutUs(kDefaultKeepAliveTimeoutUs),
           mKeepAliveGeneration(0),
           mPausing(false),
-          mPauseGeneration(0) {
+          mPauseGeneration(0),
+          mPlayResponseParsed(false) {
         mNetLooper->setName("rtsp net");
         mNetLooper->start(false /* runOnCallingThread */,
                           false /* canCallJava */,
@@ -685,23 +686,27 @@ struct MyHandler : public AHandler {
                         i = response->mHeaders.indexOfKey("transport");
                         CHECK_GE(i, 0);
 
-                        if (!track->mUsingInterleavedTCP) {
-                            AString transport = response->mHeaders.valueAt(i);
+                        if (track->mRTPSocket != -1 && track->mRTCPSocket != -1) {
+                            if (!track->mUsingInterleavedTCP) {
+                                AString transport = response->mHeaders.valueAt(i);
 
-                            // We are going to continue even if we were
-                            // unable to poke a hole into the firewall...
-                            pokeAHole(
-                                    track->mRTPSocket,
-                                    track->mRTCPSocket,
-                                    transport);
+                                // We are going to continue even if we were
+                                // unable to poke a hole into the firewall...
+                                pokeAHole(
+                                        track->mRTPSocket,
+                                        track->mRTCPSocket,
+                                        transport);
+                            }
+
+                            mRTPConn->addStream(
+                                    track->mRTPSocket, track->mRTCPSocket,
+                                    mSessionDesc, index,
+                                    notify, track->mUsingInterleavedTCP);
+
+                            mSetupTracksSuccessful = true;
+                        } else {
+                            result = BAD_VALUE;
                         }
-
-                        mRTPConn->addStream(
-                                track->mRTPSocket, track->mRTCPSocket,
-                                mSessionDesc, index,
-                                notify, track->mUsingInterleavedTCP);
-
-                        mSetupTracksSuccessful = true;
                     }
                 }
 
@@ -723,7 +728,7 @@ struct MyHandler : public AHandler {
                 }
 
                 ++index;
-                if (index < mSessionDesc->countTracks()) {
+                if (result == OK && index < mSessionDesc->countTracks()) {
                     setupTrack(index);
                 } else if (mSetupTracksSuccessful) {
                     ++mKeepAliveGeneration;
@@ -1371,6 +1376,7 @@ struct MyHandler : public AHandler {
     }
 
     void parsePlayResponse(const sp<ARTSPResponse> &response) {
+        mPlayResponseParsed = true;
         if (mTracks.size() == 0) {
             ALOGV("parsePlayResponse: late packets ignored.");
             return;
@@ -1524,6 +1530,8 @@ private:
 
     Vector<TrackInfo> mTracks;
 
+    bool mPlayResponseParsed;
+
     void setupTrack(size_t index) {
         sp<APacketSource> source =
             new APacketSource(mSessionDesc, index);
@@ -1551,6 +1559,8 @@ private:
         info->mUsingInterleavedTCP = false;
         info->mFirstSeqNumInSegment = 0;
         info->mNewSegment = true;
+        info->mRTPSocket = -1;
+        info->mRTCPSocket = -1;
         info->mRTPAnchor = 0;
         info->mNTPAnchorUs = -1;
         info->mNormalPlayTimeRTP = 0;
@@ -1727,6 +1737,13 @@ private:
     void onAccessUnitComplete(
             int32_t trackIndex, const sp<ABuffer> &accessUnit) {
         ALOGV("onAccessUnitComplete track %d", trackIndex);
+
+        if(!mPlayResponseParsed){
+            ALOGI("play response is not parsed, storing accessunit");
+            TrackInfo *track = &mTracks.editItemAt(trackIndex);
+            track->mPackets.push_back(accessUnit);
+            return;
+        }
 
         if (mFirstAccessUnit) {
             sp<AMessage> msg = mNotify->dup();
