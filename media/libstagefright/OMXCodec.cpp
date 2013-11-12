@@ -245,6 +245,10 @@ uint32_t OMXCodec::getComponentQuirks(
         quirks |= kRequiresAllocateBufferOnOutputPorts;
     }
     if (list->codecHasQuirk(
+                index, "requires-flush-before-shutdown")) {
+        quirks |= kRequiresFlushBeforeShutdown;
+    }
+    if (list->codecHasQuirk(
                 index, "output-buffers-are-unreadable")) {
         quirks |= kOutputBuffersAreUnreadable;
     }
@@ -4609,7 +4613,7 @@ status_t QueryCodec(
     // Color format query
     OMX_VIDEO_PARAM_PORTFORMATTYPE portFormat;
     InitOMXParams(&portFormat);
-    portFormat.nPortIndex = !isEncoder ? 1 : 0;
+    portFormat.nPortIndex = !isEncoder ? 0 : 1;
     for (portFormat.nIndex = 0;; ++portFormat.nIndex)  {
         err = omx->getParameter(
                 node, OMX_IndexParamVideoPortFormat,
